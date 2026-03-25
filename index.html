@@ -79,6 +79,16 @@
             z-index: 100;
             pointer-events: none;
         }
+
+        .loading-pulse {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
     </style>
 </head>
 <body class="flex flex-col items-center p-4 md:p-8">
@@ -166,10 +176,10 @@
         const realAudios = {};
         let timerInterval;
 
-        // URLs oficiales de Google (altamente compatibles y estables)
+        // URLs MP3 robustas con soporte CORS
         const AUDIO_URLS = {
-            rain: 'https://actions.google.com/sounds/v1/water/rain_heavy.ogg',
-            forest: 'https://actions.google.com/sounds/v1/ambiences/morning_forest.ogg'
+            rain: 'https://cdn.pixabay.com/audio/2022/07/04/audio_3d192070f6.mp3',
+            forest: 'https://cdn.pixabay.com/audio/2022/03/09/audio_24734a7065.mp3'
         };
 
         function notify(msg) {
@@ -212,6 +222,8 @@
 
         async function updateVolume(type, value) {
             const val = parseFloat(value);
+            const card = document.getElementById(`card-${type}`);
+            const label = document.getElementById(`val-${type}`);
             
             if (type === 'white' || type === 'brown') {
                 await initAudioEngine();
@@ -225,32 +237,41 @@
                 }
                 gainNodes[type].gain.setTargetAtTime(val, audioCtx.currentTime, 0.1);
             } else {
-                // Motor de Audio Real (HTML5 Audio)
                 if (!realAudios[type]) {
-                    const audio = new Audio(AUDIO_URLS[type]);
+                    const audio = new Audio();
+                    audio.crossOrigin = "anonymous";
                     audio.loop = true;
-                    audio.volume = 0;
+                    audio.src = AUDIO_URLS[type];
                     realAudios[type] = audio;
                     
-                    notify("Preparando sonido...");
-                    
-                    // Primer intento de play al mover el slider
-                    audio.play().catch(() => {
-                        console.log("Esperando interacción para iniciar " + type);
-                    });
+                    card.classList.add('loading-pulse');
+                    notify("Conectando con el servidor...");
+
+                    audio.oncanplaythrough = () => {
+                        card.classList.remove('loading-pulse');
+                        if (parseFloat(document.querySelector(`#card-${type} input`).value) > 0) {
+                            audio.play().catch(() => console.log("Reintentando play..."));
+                        }
+                    };
+
+                    audio.onerror = () => {
+                        card.classList.remove('loading-pulse');
+                        notify("Error al cargar " + type);
+                        card.style.opacity = "0.5";
+                    };
+
+                    audio.play().catch(() => {});
                 }
                 
                 realAudios[type].volume = val;
-                if (val > 0 && realAudios[type].paused) {
-                    realAudios[type].play().catch(() => {});
-                } else if (val === 0) {
+                if (val > 0) {
+                    if (realAudios[type].paused) realAudios[type].play().catch(() => {});
+                } else {
                     realAudios[type].pause();
                 }
             }
 
-            // UI
-            const card = document.getElementById(`card-${type}`);
-            const label = document.getElementById(`val-${type}`);
+            // UI Update
             if (val > 0) {
                 card.classList.add('active-glow');
                 label.innerText = Math.round(val * 100) + "%";
@@ -280,7 +301,10 @@
             Object.values(gainNodes).forEach(n => n.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5));
             Object.values(realAudios).forEach(a => { a.pause(); a.volume = 0; });
             document.querySelectorAll('input[type=range]').forEach(i => i.value = 0);
-            document.querySelectorAll('.glass-card').forEach(c => c.classList.remove('active-glow'));
+            document.querySelectorAll('.glass-card').forEach(c => {
+                c.classList.remove('active-glow');
+                c.classList.remove('loading-pulse');
+            });
             document.querySelectorAll('[id^="val-"]').forEach(v => v.innerText = "Apagado");
             clearInterval(timerInterval);
             document.getElementById('timer-display').innerText = "00:00";
