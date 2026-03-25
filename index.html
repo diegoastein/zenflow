@@ -70,8 +70,11 @@
             right: 10px;
             font-size: 10px;
             color: #ef4444;
-            max-width: 200px;
+            max-width: 250px;
             pointer-events: none;
+            background: rgba(0,0,0,0.5);
+            padding: 5px;
+            border-radius: 4px;
         }
     </style>
 </head>
@@ -155,21 +158,21 @@
 
     <script>
         let audioContext;
-        let sources = {};
-        let gainNodes = {};
-        let mediaElements = {};
+        const gainNodes = {};
+        const sources = {};
+        const mediaElements = {};
         let timerInterval;
 
-        // URLs más estables (Mixkit suele permitir hotlinking en entornos de preview)
+        // URLs estables con soporte CORS garantizado
         const audioUrls = {
-            rain: 'https://assets.mixkit.co/sfx/preview/mixkit-light-rain-loop-2393.mp3',
-            forest: 'https://assets.mixkit.co/sfx/preview/mixkit-forest-birds-and-river-loop-1216.mp3'
+            rain: 'https://upload.wikimedia.org/wikipedia/commons/transcoded/d/d3/Rain_on_leaves.ogg/Rain_on_leaves.ogg.mp3',
+            forest: 'https://upload.wikimedia.org/wikipedia/commons/transcoded/3/30/Forest_ambience.ogg/Forest_ambience.ogg.mp3'
         };
 
         function showError(msg) {
             const log = document.getElementById('error-log');
-            log.innerText = msg;
-            setTimeout(() => log.innerText = '', 5000);
+            log.innerText = "Info: " + msg;
+            setTimeout(() => { if(log.innerText.includes(msg)) log.innerText = ''; }, 6000);
         }
 
         async function initAudio() {
@@ -230,20 +233,18 @@
                         audio.src = audioUrls[type];
                         audio.loop = true;
                         
-                        audio.onerror = () => {
-                            showError("Error al cargar sonido de " + type);
-                            const card = document.getElementById(`card-${type}`);
-                            card.style.opacity = '0.5';
-                        };
+                        audio.onplay = () => showError("Cargando sonido de " + type + "...");
+                        audio.onerror = (e) => showError("El archivo de " + type + " no cargó. Verifica tu conexión.");
 
                         const source = audioContext.createMediaElementSource(audio);
                         source.connect(gainNodes[type]);
                         mediaElements[type] = audio;
+                        
                         audio.play().catch(err => {
-                            console.warn("Autoplay bloqueado o error de carga", err);
+                            showError("Haz clic en cualquier parte para activar el audio.");
                         });
                     } catch (e) {
-                        showError("Error de origen de audio (CORS/Bloqueo)");
+                        showError("Error de seguridad al conectar el audio.");
                         console.error(e);
                     }
                 }
@@ -288,6 +289,10 @@
         function stopAll() {
             Object.values(gainNodes).forEach(node => {
                 node.gain.setTargetAtTime(0, audioContext.currentTime, 0.5);
+            });
+            Object.values(mediaElements).forEach(audio => {
+                audio.pause();
+                audio.currentTime = 0;
             });
             document.querySelectorAll('input[type=range]').forEach(input => input.value = 0);
             document.querySelectorAll('.glass-card').forEach(card => card.classList.remove('active-glow'));
