@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ZenFlow - Ruido Blanco & Enfoque</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- PASO 1: Script de AdSense (Colocar aquí cuando tengas la cuenta) -->
+    <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXX" crossorigin="anonymous"></script> -->
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
         
@@ -77,23 +81,12 @@
             display: none;
             border: 1px solid rgba(129, 140, 248, 0.3);
             z-index: 100;
-            pointer-events: none;
-        }
-
-        .loading-pulse {
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
         }
     </style>
 </head>
 <body class="flex flex-col items-center p-4 md:p-8" onclick="unlockAudio()">
 
-    <!-- Cabecera -->
+    <!-- Header -->
     <header class="text-center mb-12 mt-8">
         <h1 class="text-4xl font-semibold tracking-tight text-indigo-300">ZenFlow</h1>
         <p class="text-slate-400 mt-2">Tu espacio de calma y productividad</p>
@@ -101,7 +94,7 @@
 
     <main class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         
-        <!-- Tarjeta Ruido Blanco -->
+        <!-- White Noise -->
         <div class="glass-card p-6 rounded-3xl flex flex-col items-center" id="card-white">
             <div class="text-4xl mb-4">☁️</div>
             <h3 class="font-medium mb-4 text-slate-200">Ruido Blanco</h3>
@@ -110,7 +103,7 @@
             <div class="text-xs text-slate-500 uppercase tracking-widest mt-2" id="val-white">Apagado</div>
         </div>
 
-        <!-- Tarjeta Ruido Marrón -->
+        <!-- Brown Noise -->
         <div class="glass-card p-6 rounded-3xl flex flex-col items-center" id="card-brown">
             <div class="text-4xl mb-4">🌊</div>
             <h3 class="font-medium mb-4 text-slate-200">Ruido Marrón</h3>
@@ -119,7 +112,7 @@
             <div class="text-xs text-slate-500 uppercase tracking-widest mt-2" id="val-brown">Apagado</div>
         </div>
 
-        <!-- Tarjeta Lluvia -->
+        <!-- Rain (Archivo Local) -->
         <div class="glass-card p-6 rounded-3xl flex flex-col items-center" id="card-rain">
             <div class="text-4xl mb-4">🌧️</div>
             <h3 class="font-medium mb-4 text-slate-200">Lluvia Real</h3>
@@ -128,7 +121,7 @@
             <div class="text-xs text-slate-500 uppercase tracking-widest mt-2" id="val-rain">Apagado</div>
         </div>
 
-        <!-- Tarjeta Bosque -->
+        <!-- Forest (Archivo Local) -->
         <div class="glass-card p-6 rounded-3xl flex flex-col items-center" id="card-forest">
             <div class="text-4xl mb-4">🌳</div>
             <h3 class="font-medium mb-4 text-slate-200">Bosque</h3>
@@ -137,7 +130,7 @@
             <div class="text-xs text-slate-500 uppercase tracking-widest mt-2" id="val-forest">Apagado</div>
         </div>
 
-        <!-- Temporizador / Control Maestro -->
+        <!-- Timer -->
         <div class="glass-card p-6 rounded-3xl flex flex-col items-center justify-between">
             <h3 class="font-medium text-slate-200 mb-4">Temporizador</h3>
             <div class="flex gap-2">
@@ -148,10 +141,11 @@
             <div id="timer-display" class="mt-4 text-2xl font-mono text-indigo-400">00:00</div>
         </div>
 
-        <!-- Espacio Publicitario Nativo -->
+        <!-- Espacio para Anuncio Nativo -->
         <div class="glass-card p-6 rounded-3xl flex flex-col items-center justify-center border-dashed">
             <div class="ad-slot w-full h-full rounded-2xl">
-                Espacio para<br>Publicidad Nativa
+                <!-- Espacio para código AdSense -->
+                Publicidad
             </div>
         </div>
 
@@ -159,10 +153,11 @@
 
     <div id="status-bar"></div>
 
-    <!-- Banner Publicitario Inferior -->
-    <footer class="mt-16 w-full max-w-2xl">
+    <!-- Banner Inferior -->
+    <footer class="mt-16 w-full max-w-2xl px-4">
         <div class="ad-slot w-full py-4 rounded-xl">
-            Banner Publicitario (728x90)
+            <!-- Espacio para código AdSense Banner -->
+            Publicidad (Banner)
         </div>
         <p class="text-center text-slate-600 text-[10px] mt-4 uppercase tracking-tighter">
             ZenFlow es posible gracias a la publicidad no invasiva
@@ -172,14 +167,15 @@
     <script>
         let audioCtx;
         const gainNodes = {};
-        const sources = {};
+        const noiseSources = {};
         const atmosphereAudios = {};
         let timerInterval;
-        let audioUnlocked = false;
+        let isUnlocked = false;
 
-        // Fuentes de audio externas (CORS permitido)
+        // Archivos locales (deben estar en la misma carpeta que este HTML)
         const AUDIO_ASSETS = {
-            forest: 'https://upload.wikimedia.org/wikipedia/commons/0/0b/Forest_Birds_Singing_at_Springtime.mp3'
+            rain: './rain.mp3',
+            forest: './forest.mp3'
         };
 
         function showStatus(msg) {
@@ -189,16 +185,15 @@
             setTimeout(() => bar.style.display = 'none', 3000);
         }
 
-        // Desbloquear motor de audio tras interacción del usuario
         async function unlockAudio() {
-            if (audioUnlocked) return;
+            if (isUnlocked) return;
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') await audioCtx.resume();
-            audioUnlocked = true;
+            isUnlocked = true;
         }
 
-        // Generador de Ruido (Blanco, Marrón y Lluvia Sintética)
-        function createNoiseBuffer(type) {
+        // Generador para White y Brown Noise
+        function setupNoiseNode(type) {
             const bufferSize = 2 * audioCtx.sampleRate;
             const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
             const output = buffer.getChannelData(0);
@@ -206,11 +201,9 @@
 
             for (let i = 0; i < bufferSize; i++) {
                 let white = Math.random() * 2 - 1;
-                
                 if (type === 'white') {
                     output[i] = white;
-                } else if (type === 'brown' || type === 'rain') {
-                    // Generación de ruido marrón
+                } else {
                     output[i] = (lastOut + (0.02 * white)) / 1.02;
                     lastOut = output[i];
                     output[i] *= 3.5; 
@@ -221,60 +214,41 @@
             source.buffer = buffer;
             source.loop = true;
 
-            // Filtro específico para dar realismo a la lluvia sintética
-            if (type === 'rain') {
-                const filter = audioCtx.createBiquadFilter();
-                filter.type = 'lowpass';
-                filter.frequency.value = 1200;
-                return { source, output: filter };
-            }
-
-            return { source, output: source };
+            const gainNode = audioCtx.createGain();
+            gainNode.gain.value = 0;
+            gainNode.connect(audioCtx.destination);
+            
+            source.connect(gainNode);
+            source.start();
+            return gainNode;
         }
 
         async function updateVolume(type, value) {
             const val = parseFloat(value);
             await unlockAudio();
 
-            if (type === 'white' || type === 'brown' || type === 'rain') {
+            if (type === 'white' || type === 'brown') {
                 if (!gainNodes[type]) {
-                    const nodeData = createNoiseBuffer(type);
-                    const gainNode = audioCtx.createGain();
-                    gainNode.gain.value = 0;
-                    gainNode.connect(audioCtx.destination);
-                    
-                    // CORRECCIÓN: Evitar conexión de AudioNode a sí mismo (IndexSizeError)
-                    if (nodeData.source !== nodeData.output) {
-                        nodeData.source.connect(nodeData.output);
-                        nodeData.output.connect(gainNode);
-                    } else {
-                        nodeData.source.connect(gainNode);
-                    }
-                    
-                    nodeData.source.start();
-                    gainNodes[type] = gainNode;
-                    sources[type] = nodeData.source;
+                    gainNodes[type] = setupNoiseNode(type);
                 }
                 gainNodes[type].gain.setTargetAtTime(val, audioCtx.currentTime, 0.1);
             } else {
-                // Audio externo para el Bosque
+                // Motor para Lluvia y Bosque (archivos MP3 locales)
                 if (!atmosphereAudios[type]) {
                     const audio = new Audio(AUDIO_ASSETS[type]);
                     audio.loop = true;
-                    audio.crossOrigin = "anonymous";
                     atmosphereAudios[type] = audio;
-                    showStatus("Cargando atmósfera...");
                 }
                 
                 atmosphereAudios[type].volume = val;
                 if (val > 0) {
-                    atmosphereAudios[type].play().catch(() => showStatus("Interactúa con la página para activar"));
+                    atmosphereAudios[type].play().catch(() => showStatus("Interactúa con la página"));
                 } else {
                     atmosphereAudios[type].pause();
                 }
             }
 
-            // Actualización de Interfaz
+            // Actualización visual de la tarjeta
             const card = document.getElementById(`card-${type}`);
             const label = document.getElementById(`val-${type}`);
             if (val > 0) {
@@ -303,11 +277,8 @@
         }
 
         function stopAll() {
-            // Apagar ruidos sintéticos
             Object.values(gainNodes).forEach(n => n.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5));
-            // Pausar audios externos
             Object.values(atmosphereAudios).forEach(a => { a.pause(); a.volume = 0; });
-            // Resetear UI
             document.querySelectorAll('input[type=range]').forEach(i => i.value = 0);
             document.querySelectorAll('.glass-card').forEach(c => c.classList.remove('active-glow'));
             document.querySelectorAll('[id^="val-"]').forEach(v => v.innerText = "Apagado");
