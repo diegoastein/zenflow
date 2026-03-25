@@ -176,10 +176,10 @@
         const realAudios = {};
         let timerInterval;
 
-        // URLs MP3 robustas con soporte CORS
+        // URLs optimizadas para mayor compatibilidad
         const AUDIO_URLS = {
-            rain: 'https://cdn.pixabay.com/audio/2022/07/04/audio_3d192070f6.mp3',
-            forest: 'https://cdn.pixabay.com/audio/2022/03/09/audio_24734a7065.mp3'
+            rain: 'https://www.soundjay.com/nature/rain-07.mp3',
+            forest: 'https://www.soundjay.com/nature/forest-birds-01.mp3'
         };
 
         function notify(msg) {
@@ -239,39 +239,40 @@
             } else {
                 if (!realAudios[type]) {
                     const audio = new Audio();
-                    audio.crossOrigin = "anonymous";
                     audio.loop = true;
                     audio.src = AUDIO_URLS[type];
                     realAudios[type] = audio;
                     
                     card.classList.add('loading-pulse');
-                    notify("Conectando con el servidor...");
+                    notify("Cargando ambiente...");
 
-                    audio.oncanplaythrough = () => {
+                    audio.addEventListener('canplaythrough', () => {
                         card.classList.remove('loading-pulse');
                         if (parseFloat(document.querySelector(`#card-${type} input`).value) > 0) {
-                            audio.play().catch(() => console.log("Reintentando play..."));
+                            audio.play().catch(() => {});
                         }
-                    };
+                    }, { once: true });
 
-                    audio.onerror = () => {
+                    audio.addEventListener('error', () => {
                         card.classList.remove('loading-pulse');
-                        notify("Error al cargar " + type);
+                        notify("Error de carga. Intenta de nuevo.");
                         card.style.opacity = "0.5";
-                    };
+                    });
 
-                    audio.play().catch(() => {});
+                    audio.load();
                 }
                 
                 realAudios[type].volume = val;
                 if (val > 0) {
-                    if (realAudios[type].paused) realAudios[type].play().catch(() => {});
+                    realAudios[type].play().catch(() => {
+                        notify("Haz clic para activar el audio");
+                    });
                 } else {
                     realAudios[type].pause();
                 }
             }
 
-            // UI Update
+            // Actualización de UI
             if (val > 0) {
                 card.classList.add('active-glow');
                 label.innerText = Math.round(val * 100) + "%";
