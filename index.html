@@ -69,12 +69,13 @@
             bottom: 10px;
             right: 10px;
             font-size: 10px;
-            color: #ef4444;
+            color: #818cf8;
             max-width: 250px;
             pointer-events: none;
             background: rgba(0,0,0,0.5);
-            padding: 5px;
+            padding: 5px 10px;
             border-radius: 4px;
+            display: none;
         }
     </style>
 </head>
@@ -160,19 +161,20 @@
         let audioContext;
         const gainNodes = {};
         const sources = {};
-        const mediaElements = {};
+        const audioElements = {};
         let timerInterval;
 
-        // URLs estables con soporte CORS garantizado
+        // URLs optimizadas
         const audioUrls = {
-            rain: 'https://upload.wikimedia.org/wikipedia/commons/transcoded/d/d3/Rain_on_leaves.ogg/Rain_on_leaves.ogg.mp3',
-            forest: 'https://upload.wikimedia.org/wikipedia/commons/transcoded/3/30/Forest_ambience.ogg/Forest_ambience.ogg.mp3'
+            rain: 'https://www.soundjay.com/nature/rain-07.mp3',
+            forest: 'https://www.soundjay.com/nature/forest-birds-01.mp3'
         };
 
-        function showError(msg) {
+        function showStatus(msg) {
             const log = document.getElementById('error-log');
-            log.innerText = "Info: " + msg;
-            setTimeout(() => { if(log.innerText.includes(msg)) log.innerText = ''; }, 6000);
+            log.style.display = 'block';
+            log.innerText = msg;
+            setTimeout(() => { log.style.display = 'none'; }, 3000);
         }
 
         async function initAudio() {
@@ -210,51 +212,38 @@
         }
 
         async function updateVolume(type, value) {
-            await initAudio();
             const val = parseFloat(value);
             
-            if (!gainNodes[type]) {
-                gainNodes[type] = audioContext.createGain();
-                gainNodes[type].gain.value = 0;
-                gainNodes[type].connect(audioContext.destination);
-                
-                if (type === 'white' || type === 'brown') {
-                    try {
-                        sources[type] = createNoiseBuffer(type);
-                        sources[type].connect(gainNodes[type]);
-                        sources[type].start();
-                    } catch (e) {
-                        showError("Error al generar ruido sintético.");
-                    }
-                } else {
-                    try {
-                        const audio = new Audio();
-                        audio.crossOrigin = "anonymous";
-                        audio.src = audioUrls[type];
-                        audio.loop = true;
-                        
-                        audio.onplay = () => showError("Cargando sonido de " + type + "...");
-                        audio.onerror = (e) => showError("El archivo de " + type + " no cargó. Verifica tu conexión.");
-
-                        const source = audioContext.createMediaElementSource(audio);
-                        source.connect(gainNodes[type]);
-                        mediaElements[type] = audio;
-                        
-                        audio.play().catch(err => {
-                            showError("Haz clic en cualquier parte para activar el audio.");
-                        });
-                    } catch (e) {
-                        showError("Error de seguridad al conectar el audio.");
-                        console.error(e);
-                    }
+            if (type === 'white' || type === 'brown') {
+                await initAudio();
+                if (!gainNodes[type]) {
+                    gainNodes[type] = audioContext.createGain();
+                    gainNodes[type].gain.value = 0;
+                    gainNodes[type].connect(audioContext.destination);
+                    sources[type] = createNoiseBuffer(type);
+                    sources[type].connect(gainNodes[type]);
+                    sources[type].start();
+                }
+                gainNodes[type].gain.setTargetAtTime(val, audioContext.currentTime, 0.1);
+            } else {
+                // Lluvia y Bosque usando HTML5 Audio (más compatible)
+                if (!audioElements[type]) {
+                    const audio = new Audio(audioUrls[type]);
+                    audio.loop = true;
+                    audio.volume = 0;
+                    audioElements[type] = audio;
+                    
+                    audio.play().catch(() => {
+                        showStatus("Haz clic para activar el sonido");
+                    });
+                }
+                audioElements[type].volume = val;
+                if (val > 0 && audioElements[type].paused) {
+                    audioElements[type].play();
                 }
             }
 
-            if (gainNodes[type]) {
-                gainNodes[type].gain.setTargetAtTime(val, audioContext.currentTime, 0.1);
-            }
-
-            // UI
+            // Actualizar UI
             const card = document.getElementById(`card-${type}`);
             const label = document.getElementById(`val-${type}`);
             
@@ -287,13 +276,17 @@
         }
 
         function stopAll() {
+            // Detener ruidos sintéticos
             Object.values(gainNodes).forEach(node => {
                 node.gain.setTargetAtTime(0, audioContext.currentTime, 0.5);
             });
-            Object.values(mediaElements).forEach(audio => {
+            // Detener audios externos
+            Object.values(audioElements).forEach(audio => {
                 audio.pause();
+                audio.volume = 0;
                 audio.currentTime = 0;
             });
+            // Reset UI
             document.querySelectorAll('input[type=range]').forEach(input => input.value = 0);
             document.querySelectorAll('.glass-card').forEach(card => card.classList.remove('active-glow'));
             document.querySelectorAll('[id^="val-"]').forEach(val => val.innerText = "Apagado");
