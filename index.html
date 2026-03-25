@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZenFlow - Ruido Blanco & Enfoque</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at center, #1a1c2c 0%, #0d0e14 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        input[type=range] {
+            height: 4px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #818cf8;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(129, 140, 248, 0.5);
+        }
+
+        .ad-slot {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+            min-height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .active-glow {
+            box-shadow: 0 0 20px rgba(129, 140, 248, 0.2);
+            border-color: rgba(129, 140, 248, 0.4) !important;
+        }
+        
+        #error-log {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 10px;
+            color: #ef4444;
+            max-width: 200px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center p-4 md:p-8">
+
+    <!-- Header -->
+    <header class="text-center mb-12 mt-8">
+        <h1 class="text-4xl font-semibold tracking-tight text-indigo-300">ZenFlow</h1>
+        <p class="text-slate-400 mt-2">Tu espacio de calma y productividad</p>
+    </header>
+
+    <main class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        
+        <!-- White Noise Card -->
+        <div class="glass-card p-6 rounded-3xl flex flex-col items-center" id="card-white">
+            <div class="text-4xl mb-4">☁️</div>
+            <h3 class="font-medium mb-4 text-slate-200">Ruido Blanco</h3>
+            <input type="range" min="0" max="1" step="0.01" value="0" 
+                   class="w-full mb-2" oninput="updateVolume('white', this.value)">
+            <div class="text-xs text-slate-500 uppercase tracking-widest mt-2" id="val-white">Apagado</div>
+        </div>
+
+        <!-- Brown Noise Card -->
+        <div class="glass-card p-6 rounded-3xl flex flex-col items-center" id="card-brown">
+            <div class="text-4xl mb-4">🌊</div>
+            <h3 class="font-medium mb-4 text-slate-200">Ruido Marrón</h3>
+            <input type="range" min="0" max="1" step="0.01" value="0" 
+                   class="w-full mb-2" oninput="updateVolume('brown', this.value)">
+            <div class="text-xs text-slate-500 uppercase tracking-widest mt-2" id="val-brown">Apagado</div>
+        </div>
+
+        <!-- Rain Card -->
+        <div class="glass-card p-6 rounded-3xl flex flex-col items-center" id="card-rain">
+            <div class="text-4xl mb-4">🌧️</div>
+            <h3 class="font-medium mb-4 text-slate-200">Lluvia Real</h3>
+            <input type="range" min="0" max="1" step="0.01" value="0" 
+                   class="w-full mb-2" oninput="updateVolume('rain', this.value)">
+            <div class="text-xs text-slate-500 uppercase tracking-widest mt-2" id="val-rain">Apagado</div>
+        </div>
+
+        <!-- Nature/Forest Card -->
+        <div class="glass-card p-6 rounded-3xl flex flex-col items-center" id="card-forest">
+            <div class="text-4xl mb-4">🌳</div>
+            <h3 class="font-medium mb-4 text-slate-200">Bosque</h3>
+            <input type="range" min="0" max="1" step="0.01" value="0" 
+                   class="w-full mb-2" oninput="updateVolume('forest', this.value)">
+            <div class="text-xs text-slate-500 uppercase tracking-widest mt-2" id="val-forest">Apagado</div>
+        </div>
+
+        <!-- Timer/Master Control -->
+        <div class="glass-card p-6 rounded-3xl flex flex-col items-center justify-between">
+            <h3 class="font-medium text-slate-200 mb-4">Temporizador</h3>
+            <div class="flex gap-2">
+                <button onclick="setTimer(25)" class="px-3 py-1 bg-slate-800 rounded-lg text-xs hover:bg-slate-700">25m</button>
+                <button onclick="setTimer(50)" class="px-3 py-1 bg-slate-800 rounded-lg text-xs hover:bg-slate-700">50m</button>
+                <button onclick="stopAll()" class="px-3 py-1 bg-red-900/30 text-red-400 rounded-lg text-xs hover:bg-red-900/50">Stop</button>
+            </div>
+            <div id="timer-display" class="mt-4 text-2xl font-mono text-indigo-400">00:00</div>
+        </div>
+
+        <!-- Ad Slot (Native look) -->
+        <div class="glass-card p-6 rounded-3xl flex flex-col items-center justify-center border-dashed">
+            <div class="ad-slot w-full h-full rounded-2xl">
+                Espacio para<br>Publicidad Nativa
+            </div>
+        </div>
+
+    </main>
+
+    <div id="error-log"></div>
+
+    <!-- Bottom Ad Banner -->
+    <footer class="mt-16 w-full max-w-2xl">
+        <div class="ad-slot w-full py-4 rounded-xl">
+            Banner Publicitario (728x90)
+        </div>
+        <p class="text-center text-slate-600 text-[10px] mt-4 uppercase tracking-tighter">
+            ZenFlow es posible gracias a la publicidad no invasiva
+        </p>
+    </footer>
+
+    <script>
+        let audioContext;
+        let sources = {};
+        let gainNodes = {};
+        let mediaElements = {};
+        let timerInterval;
+
+        // URLs más estables (Mixkit suele permitir hotlinking en entornos de preview)
+        const audioUrls = {
+            rain: 'https://assets.mixkit.co/sfx/preview/mixkit-light-rain-loop-2393.mp3',
+            forest: 'https://assets.mixkit.co/sfx/preview/mixkit-forest-birds-and-river-loop-1216.mp3'
+        };
+
+        function showError(msg) {
+            const log = document.getElementById('error-log');
+            log.innerText = msg;
+            setTimeout(() => log.innerText = '', 5000);
+        }
+
+        async function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioContext.state === 'suspended') {
+                await audioContext.resume();
+            }
+        }
+
+        function createNoiseBuffer(type) {
+            const bufferSize = 2 * audioContext.sampleRate;
+            const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+            const output = buffer.getChannelData(0);
+
+            if (type === 'white') {
+                for (let i = 0; i < bufferSize; i++) {
+                    output[i] = Math.random() * 2 - 1;
+                }
+            } else if (type === 'brown') {
+                let lastOut = 0.0;
+                for (let i = 0; i < bufferSize; i++) {
+                    let white = Math.random() * 2 - 1;
+                    output[i] = (lastOut + (0.02 * white)) / 1.02;
+                    lastOut = output[i];
+                    output[i] *= 3.5; 
+                }
+            }
+
+            const node = audioContext.createBufferSource();
+            node.buffer = buffer;
+            node.loop = true;
+            return node;
+        }
+
+        async function updateVolume(type, value) {
+            await initAudio();
+            const val = parseFloat(value);
+            
+            if (!gainNodes[type]) {
+                gainNodes[type] = audioContext.createGain();
+                gainNodes[type].gain.value = 0;
+                gainNodes[type].connect(audioContext.destination);
+                
+                if (type === 'white' || type === 'brown') {
+                    try {
+                        sources[type] = createNoiseBuffer(type);
+                        sources[type].connect(gainNodes[type]);
+                        sources[type].start();
+                    } catch (e) {
+                        showError("Error al generar ruido sintético.");
+                    }
+                } else {
+                    try {
+                        const audio = new Audio();
+                        audio.crossOrigin = "anonymous";
+                        audio.src = audioUrls[type];
+                        audio.loop = true;
+                        
+                        audio.onerror = () => {
+                            showError("Error al cargar sonido de " + type);
+                            const card = document.getElementById(`card-${type}`);
+                            card.style.opacity = '0.5';
+                        };
+
+                        const source = audioContext.createMediaElementSource(audio);
+                        source.connect(gainNodes[type]);
+                        mediaElements[type] = audio;
+                        audio.play().catch(err => {
+                            console.warn("Autoplay bloqueado o error de carga", err);
+                        });
+                    } catch (e) {
+                        showError("Error de origen de audio (CORS/Bloqueo)");
+                        console.error(e);
+                    }
+                }
+            }
+
+            if (gainNodes[type]) {
+                gainNodes[type].gain.setTargetAtTime(val, audioContext.currentTime, 0.1);
+            }
+
+            // UI
+            const card = document.getElementById(`card-${type}`);
+            const label = document.getElementById(`val-${type}`);
+            
+            if (val > 0) {
+                card.classList.add('active-glow');
+                label.innerText = Math.round(val * 100) + "%";
+            } else {
+                card.classList.remove('active-glow');
+                label.innerText = "Apagado";
+            }
+        }
+
+        function setTimer(minutes) {
+            clearInterval(timerInterval);
+            let seconds = minutes * 60;
+            const display = document.getElementById('timer-display');
+            
+            timerInterval = setInterval(() => {
+                const m = Math.floor(seconds / 60);
+                const s = seconds % 60;
+                display.innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                
+                if (seconds <= 0) {
+                    clearInterval(timerInterval);
+                    stopAll();
+                    display.innerText = "FIN";
+                }
+                seconds--;
+            }, 1000);
+        }
+
+        function stopAll() {
+            Object.values(gainNodes).forEach(node => {
+                node.gain.setTargetAtTime(0, audioContext.currentTime, 0.5);
+            });
+            document.querySelectorAll('input[type=range]').forEach(input => input.value = 0);
+            document.querySelectorAll('.glass-card').forEach(card => card.classList.remove('active-glow'));
+            document.querySelectorAll('[id^="val-"]').forEach(val => val.innerText = "Apagado");
+            clearInterval(timerInterval);
+            document.getElementById('timer-display').innerText = "00:00";
+        }
+    </script>
+</body>
+</html>
