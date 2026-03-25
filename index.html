@@ -66,18 +66,18 @@
         
         #status-bar {
             position: fixed;
-            bottom: 10px;
-            right: 10px;
-            font-size: 10px;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
             color: #818cf8;
-            max-width: 250px;
-            pointer-events: none;
             background: rgba(0,0,0,0.8);
-            padding: 6px 14px;
-            border-radius: 20px;
+            padding: 8px 16px;
+            border-radius: 30px;
             display: none;
             border: 1px solid rgba(129, 140, 248, 0.3);
             z-index: 100;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -163,23 +163,23 @@
         let audioCtx;
         const gainNodes = {};
         const noiseSources = {};
-        const atmosphereAudios = {};
+        const realAudios = {};
         let timerInterval;
 
-        // Activos oficiales de Google (altamente confiables y con CORS abierto)
-        const AUDIO_ASSETS = {
+        // URLs oficiales de Google (altamente compatibles y estables)
+        const AUDIO_URLS = {
             rain: 'https://actions.google.com/sounds/v1/water/rain_heavy.ogg',
             forest: 'https://actions.google.com/sounds/v1/ambiences/morning_forest.ogg'
         };
 
-        function showStatus(msg) {
+        function notify(msg) {
             const bar = document.getElementById('status-bar');
             bar.innerText = msg;
             bar.style.display = 'block';
             setTimeout(() => bar.style.display = 'none', 3000);
         }
 
-        async function initAudioContext() {
+        async function initAudioEngine() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
@@ -188,14 +188,14 @@
             }
         }
 
-        function createNoiseNode(type) {
+        function createSynthBuffer(type) {
             const bufferSize = 2 * audioCtx.sampleRate;
             const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
             const output = buffer.getChannelData(0);
 
             if (type === 'white') {
                 for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
-            } else if (type === 'brown') {
+            } else {
                 let lastOut = 0.0;
                 for (let i = 0; i < bufferSize; i++) {
                     let white = Math.random() * 2 - 1;
@@ -204,7 +204,6 @@
                     output[i] *= 3.5; 
                 }
             }
-
             const source = audioCtx.createBufferSource();
             source.buffer = buffer;
             source.loop = true;
@@ -213,45 +212,43 @@
 
         async function updateVolume(type, value) {
             const val = parseFloat(value);
-            await initAudioContext();
-
+            
             if (type === 'white' || type === 'brown') {
-                // Lógica para ruidos sintéticos
+                await initAudioEngine();
                 if (!gainNodes[type]) {
                     gainNodes[type] = audioCtx.createGain();
                     gainNodes[type].gain.value = 0;
                     gainNodes[type].connect(audioCtx.destination);
-                    noiseSources[type] = createNoiseNode(type);
+                    noiseSources[type] = createSynthBuffer(type);
                     noiseSources[type].connect(gainNodes[type]);
                     noiseSources[type].start();
                 }
                 gainNodes[type].gain.setTargetAtTime(val, audioCtx.currentTime, 0.1);
             } else {
-                // Lógica para Lluvia y Bosque (HTML5 Audio Directo para evitar bloqueos CORS)
-                if (!atmosphereAudios[type]) {
-                    const audio = new Audio(AUDIO_ASSETS[type]);
+                // Motor de Audio Real (HTML5 Audio)
+                if (!realAudios[type]) {
+                    const audio = new Audio(AUDIO_URLS[type]);
                     audio.loop = true;
                     audio.volume = 0;
-                    atmosphereAudios[type] = audio;
+                    realAudios[type] = audio;
                     
-                    showStatus("Iniciando sonido real...");
+                    notify("Preparando sonido...");
                     
-                    // Asegurar reproducción tras el primer gesto
-                    audio.play().catch(e => console.log("Esperando interacción..."));
+                    // Primer intento de play al mover el slider
+                    audio.play().catch(() => {
+                        console.log("Esperando interacción para iniciar " + type);
+                    });
                 }
                 
-                atmosphereAudios[type].volume = val;
-                
-                if (val > 0) {
-                    if (atmosphereAudios[type].paused) {
-                        atmosphereAudios[type].play().catch(() => showStatus("Error de reproducción"));
-                    }
-                } else {
-                    atmosphereAudios[type].pause();
+                realAudios[type].volume = val;
+                if (val > 0 && realAudios[type].paused) {
+                    realAudios[type].play().catch(() => {});
+                } else if (val === 0) {
+                    realAudios[type].pause();
                 }
             }
 
-            // Actualización Visual
+            // UI
             const card = document.getElementById(`card-${type}`);
             const label = document.getElementById(`val-${type}`);
             if (val > 0) {
@@ -281,7 +278,7 @@
 
         function stopAll() {
             Object.values(gainNodes).forEach(n => n.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5));
-            Object.values(atmosphereAudios).forEach(a => { a.pause(); a.volume = 0; });
+            Object.values(realAudios).forEach(a => { a.pause(); a.volume = 0; });
             document.querySelectorAll('input[type=range]').forEach(i => i.value = 0);
             document.querySelectorAll('.glass-card').forEach(c => c.classList.remove('active-glow'));
             document.querySelectorAll('[id^="val-"]').forEach(v => v.innerText = "Apagado");
