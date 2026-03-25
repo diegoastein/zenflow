@@ -1,25 +1,25 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <!-- Identificación de cuenta AdSense -->
     <meta name="google-adsense-account" content="ca-pub-4146371990752814">
-    <script async custom-element="amp-auto-ads"
-        src="https://cdn.ampproject.org/v0/amp-auto-ads-0.1.js">
-</script>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ZenFlow - Atmósfera Minimalista</title>
+    
+    <!-- Script Principal de AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4146371990752814" crossorigin="anonymous"></script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- PASO 1: Script de AdSense (Pega aquí el código que te dará Google) -->
-    <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
-
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400&display=swap');
         
         :root {
             --zen-bg: #0f172a;
-            --zen-accent: #a7f3d0; /* Verde salvia claro */
-            --zen-secondary: #c4b5fd; /* Lavanda suave */
+            --zen-accent: #a7f3d0;
+            --zen-secondary: #c4b5fd;
         }
 
         body {
@@ -131,7 +131,6 @@
 </head>
 <body class="flex flex-col items-center p-6 md:p-12" onclick="unlockAudio()">
 
-    <!-- Header -->
     <header class="text-center mb-16 mt-4">
         <h1 class="text-5xl zen-title text-slate-100 uppercase mb-4">ZenFlow</h1>
         <p class="text-slate-400 font-light tracking-widest text-sm">Respira. Enfoca. Crea.</p>
@@ -139,7 +138,7 @@
 
     <main class="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         
-        <!-- White Noise -->
+        <!-- Ruido Blanco -->
         <div class="glass-card p-8 rounded-[2.5rem] flex flex-col items-center" id="card-white">
             <div class="text-4xl mb-6 opacity-80">☁️</div>
             <h3 class="text-sm tracking-[0.2em] font-light mb-8 text-slate-300 uppercase">Ruido Blanco</h3>
@@ -148,7 +147,7 @@
             <div class="text-[10px] text-slate-500 uppercase tracking-widest" id="val-white">Silencio</div>
         </div>
 
-        <!-- Brown Noise -->
+        <!-- Ruido Marrón -->
         <div class="glass-card p-8 rounded-[2.5rem] flex flex-col items-center" id="card-brown">
             <div class="text-4xl mb-6 opacity-80">🌊</div>
             <h3 class="text-sm tracking-[0.2em] font-light mb-8 text-slate-300 uppercase">Ruido Marrón</h3>
@@ -157,16 +156,16 @@
             <div class="text-[10px] text-slate-500 uppercase tracking-widest" id="val-brown">Silencio</div>
         </div>
 
-        <!-- Rain -->
+        <!-- Lluvia Real -->
         <div class="glass-card p-8 rounded-[2.5rem] flex flex-col items-center" id="card-rain">
-            <div class="text-4xl mb-6 opacity-80">🌧️</div>
+            <div class="text-4xl mb-4 opacity-80">🌧️</div>
             <h3 class="text-sm tracking-[0.2em] font-light mb-8 text-slate-300 uppercase">Lluvia Real</h3>
             <input type="range" min="0" max="1" step="0.01" value="0" 
                    class="w-full mb-4" oninput="updateVolume('rain', this.value)">
             <div class="text-[10px] text-slate-500 uppercase tracking-widest" id="val-rain">Silencio</div>
         </div>
 
-        <!-- Forest -->
+        <!-- Bosque -->
         <div class="glass-card p-8 rounded-[2.5rem] flex flex-col items-center" id="card-forest">
             <div class="text-4xl mb-6 opacity-80">🌳</div>
             <h3 class="text-sm tracking-[0.2em] font-light mb-8 text-slate-300 uppercase">Bosque</h3>
@@ -175,7 +174,7 @@
             <div class="text-[10px] text-slate-500 uppercase tracking-widest" id="val-forest">Silencio</div>
         </div>
 
-        <!-- Timer Master -->
+        <!-- Temporizador -->
         <div class="glass-card p-8 rounded-[2.5rem] flex flex-col items-center justify-between">
             <h3 class="text-sm tracking-[0.2em] font-light text-slate-300 uppercase mb-6">Enfoque</h3>
             <div class="flex gap-4">
@@ -186,13 +185,12 @@
             <div id="timer-display" class="mt-8 text-3xl font-light text-emerald-100/40 tracking-[0.2em]">00:00</div>
         </div>
 
-        <!-- Bloque de Publicidad Zen -->
+        <!-- Anuncio Automático -->
         <div class="glass-card p-8 rounded-[2.5rem] flex flex-col items-center justify-center border-dashed border-slate-800">
             <div class="w-full h-full flex flex-col items-center justify-center text-slate-600">
-                <div class="text-[9px] uppercase tracking-[0.3em] mb-4">Sponsor</div>
+                <div class="text-[9px] uppercase tracking-[0.3em] mb-4">Patrocinado</div>
                 <div class="w-full h-32 bg-white/5 rounded-2xl flex items-center justify-center">
-                    <!-- Aquí el código INS de AdSense -->
-                    <span class="text-[8px] opacity-30 tracking-widest uppercase">Espacio Publicitario</span>
+                    <span class="text-[8px] opacity-30 tracking-widest uppercase text-center">Espacio publicitario</span>
                 </div>
             </div>
         </div>
@@ -201,13 +199,12 @@
 
     <div id="status-bar"></div>
 
-    <!-- Footer Zen -->
     <footer class="mt-24 w-full max-w-2xl px-4 pb-12">
         <div class="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-800 to-transparent mb-8"></div>
         <div class="flex flex-col items-center gap-6">
             <div class="w-full min-h-[90px] flex items-center justify-center">
-                <!-- Banner 728x90 AdSense -->
-                <span class="text-[8px] text-slate-700 uppercase tracking-[0.5em]">Anuncio Horizontal</span>
+                <!-- Espacio para Banner -->
+                <span class="text-[8px] text-slate-700 uppercase tracking-[0.5em]">Publicidad Horizontal</span>
             </div>
             <div class="flex flex-col items-center gap-4">
                 <p class="text-slate-600 text-[9px] uppercase tracking-[0.2em] font-light">
@@ -224,7 +221,7 @@
     <div id="privacy-modal" onclick="togglePrivacy()">
         <div class="max-w-xl mx-auto bg-[#0f172a] p-10 rounded-[3rem] border border-slate-800 text-[11px] leading-loose text-slate-400 font-light" onclick="event.stopPropagation()">
             <h2 class="text-lg tracking-[0.3em] uppercase mb-8 text-emerald-200">Privacidad</h2>
-            <p class="mb-6">Tu paz es nuestra prioridad. Este sitio utiliza cookies técnicas mínimas para el funcionamiento del audio y Google AdSense para el mantenimiento del servicio.</p>
+            <p class="mb-6">Tu paz es nuestra prioridad. Este sitio utiliza cookies técnicas para el funcionamiento del audio y Google AdSense para el mantenimiento del servicio.</p>
             <h3 class="tracking-widest uppercase text-slate-200 mt-8 mb-4">Publicidad</h3>
             <p class="mb-8">Google utiliza cookies para publicar anuncios basados en tus visitas previas. Puedes gestionar tus preferencias en la configuración de anuncios de Google.</p>
             <button onclick="togglePrivacy()" class="w-full py-4 border border-emerald-900/30 text-emerald-200 rounded-2xl hover:bg-emerald-900/10 transition-all uppercase tracking-widest">Cerrar</button>
@@ -234,7 +231,6 @@
     <script>
         let audioCtx;
         const gainNodes = {};
-        const sources = {};
         const atmosphereAudios = {};
         let timerInterval;
         let isUnlocked = false;
@@ -283,11 +279,9 @@
             const source = audioCtx.createBufferSource();
             source.buffer = buffer;
             source.loop = true;
-
             const gainNode = audioCtx.createGain();
             gainNode.gain.value = 0;
             gainNode.connect(audioCtx.destination);
-            
             source.connect(gainNode);
             source.start();
             return gainNode;
@@ -298,9 +292,7 @@
             await unlockAudio();
 
             if (type === 'white' || type === 'brown') {
-                if (!gainNodes[type]) {
-                    gainNodes[type] = setupNoiseNode(type);
-                }
+                if (!gainNodes[type]) gainNodes[type] = setupNoiseNode(type);
                 gainNodes[type].gain.setTargetAtTime(val, audioCtx.currentTime, 0.2);
             } else {
                 if (!atmosphereAudios[type]) {
@@ -308,13 +300,9 @@
                     audio.loop = true;
                     atmosphereAudios[type] = audio;
                 }
-                
                 atmosphereAudios[type].volume = val;
-                if (val > 0) {
-                    atmosphereAudios[type].play().catch(() => showStatus("Respira y activa el sonido"));
-                } else {
-                    atmosphereAudios[type].pause();
-                }
+                if (val > 0) atmosphereAudios[type].play().catch(() => showStatus("Toca para activar"));
+                else atmosphereAudios[type].pause();
             }
 
             const card = document.getElementById(`card-${type}`);
@@ -332,8 +320,7 @@
             clearInterval(timerInterval);
             let seconds = minutes * 60;
             const display = document.getElementById('timer-display');
-            display.style.color = "#a7f3d0"; // Iluminar cuando está activo
-            
+            display.style.color = "#a7f3d0";
             timerInterval = setInterval(() => {
                 const m = Math.floor(seconds / 60);
                 const s = seconds % 60;
@@ -342,7 +329,6 @@
                     clearInterval(timerInterval);
                     stopAll();
                     display.innerText = "FIN";
-                    display.style.color = "";
                 }
             }, 1000);
         }
